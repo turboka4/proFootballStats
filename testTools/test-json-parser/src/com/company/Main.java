@@ -1,41 +1,25 @@
 package com.company;
 
-import com.google.gson.*;
+import jdbc.classes.PostgreSqlDriver;
+import json.data.classes.JsonStandingReader;
+import json.data.classes.Match;
+import json.data.classes.Standing;
 
-import java.io.*;
+import java.util.Collection;
 
 public class Main {
 
-    private static String filePath = "c:\\Users\\Bogdan.Gusak\\Downloads\\feed_result_table.txt";
+    private static String standingsFilePath = ".\\metadata\\standings.txt";
+    private static String gamedayFilePath = ".\\metadata\\game_day.txt";
+
     public static void main(String[] args){
-        String jsonString = getJsonString(filePath);
-        Gson gson = new GsonBuilder().create();
-        TeamsJson teams = new TeamsJson();
-        Object obj = gson.fromJson(jsonString, teams.getClass());
+        JsonStandingReader standingReader = new JsonStandingReader();
+        PostgreSqlDriver driver = new PostgreSqlDriver("jdbc:postgresql://localhost:5432/FootballStatsDev", "postgres", "admin");
+        Collection<Standing> standings = standingReader.read(standingsFilePath);
+        driver.saveStandings(standings);
     }
 
-    private static String getJsonString(String filePath){
-        String jsonOutput = "";
-        String line;
-        try{
-            FileReader reader = new FileReader(filePath);
-            BufferedReader bufferedReader = new BufferedReader(reader);
-            while ( (line = bufferedReader.readLine()) != null ){
-                jsonOutput += line;
-            }
-        }
-        catch(FileNotFoundException ex) {
-            System.out.println(
-                    "Unable to open file '" +
-                            filePath + "'");
-        }
-        catch(IOException ex) {
-            System.out.println(
-                    "Error reading file '"
-                            + filePath + "'");
-        }
-        return jsonOutput;
-    }
+
 }
 
 
