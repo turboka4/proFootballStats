@@ -97,4 +97,6 @@ public class Match {
         return match_et_score;
     }
 
+    public Collection<MatchEvent> getMatchEvents() { return events; }
+
 }
