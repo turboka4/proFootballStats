@@ -1,22 +1,37 @@
 package com.company;
 
-import jdbc.classes.PostgreSqlDriver;
-import json.data.classes.JsonStandingReader;
-import json.data.classes.Match;
-import json.data.classes.Standing;
+import jdbc.classes.MatchDAO;
+import jdbc.classes.SqlDriver;
+import jdbc.classes.StandingDAO;
+import json.data.classes.JsonReader;
+import json.data.classes.MatchesJson;
+import org.joda.time.LocalDate;
 
-import java.util.Collection;
+import java.net.URL;
 
 public class Main {
 
     private static String standingsFilePath = ".\\metadata\\standings.txt";
     private static String gamedayFilePath = ".\\metadata\\game_day.txt";
+    private static String urlTemplate = "http://football-api.com/api/?Action=fixtures&APIKey=4fb59b80-34a8-a24a-df5403de2bdb&comp_id=1204&&match_date=";
 
     public static void main(String[] args){
-        JsonStandingReader standingReader = new JsonStandingReader();
-        PostgreSqlDriver driver = new PostgreSqlDriver("jdbc:postgresql://localhost:5432/FootballStatsDev", "postgres", "admin");
-        Collection<Standing> standings = standingReader.read(standingsFilePath);
-        driver.saveStandings(standings);
+        StandingDAO standingDao = new StandingDAO();
+        MatchDAO matchDao = new MatchDAO();
+        try{
+            for (LocalDate date = new LocalDate(2014,8,16); !date.equals(new LocalDate(2016,2,18)) ;  date = date.plusDays(1))
+            {
+                String urlString = urlTemplate + String.format("%02d", date.getDayOfMonth()) + "." + String.format("%02d", date.getMonthOfYear()) + "." + date.getYear();
+                URL url = new URL(urlString);
+                MatchesJson matchesJson = JsonReader.readFromUrl(MatchesJson.class, url);
+                if (matchesJson.matches != null)
+                    matchDao.saveMatches(matchesJson.matches);
+            }
+        }
+        catch (Exception ex){
+            System.out.println("WTF: " + ex.getMessage());
+        }
+        SqlDriver.closeConnection();
     }
 
 
